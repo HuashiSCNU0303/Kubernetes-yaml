@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xiaomaivideo
+  namespace: common
+spec:
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: xiaomaivideo
+  template:
+    metadata:
+      labels:
+        app: xiaomaivideo
+    spec:
+      nodeName: ecs-3710
+      containers:
+        - name: xiaomaivideo
+          image: xiaomaivideo:v6.0
+          imagePullPolicy: Never
+          env:
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          ports:
+            - containerPort: 8088
+            - containerPort: 8719
+            - containerPort: 18730
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: xiaomaivideo-svc
+  namespace: common
+  labels:
+    app: xiaomaivideo
+spec:
+  ports:
+  - port: 8088
+    protocol: TCP
+    name: server
+    targetPort: 8088
+  - port: 8719
+    protocol: TCP
+    name: sentinel-push
+    targetPort: 8719
+  - port: 18730
+    protocol: TCP
+    name: sentinel-cluster-server
+    targetPort: 18730
+  selector:
+    app: xiaomaivideo

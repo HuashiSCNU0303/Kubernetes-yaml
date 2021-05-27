@@ -1,0 +1,51 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: fileupload
+  name: fileupload
+  namespace: common
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fileupload
+  template:
+    metadata:
+      labels:
+        app: fileupload
+    spec:
+      containers:
+      - name: fileupload
+        image: fileupload:v2.0
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8481
+          protocol: TCP
+        volumeMounts: 
+        - name: test-fileupload
+          mountPath: /root/file/
+      volumes: 
+      - name: test-fileupload
+        hostPath:
+          path: /root/file/
+          type: Directory
+      nodeName: iz2ze044hdsaym7ly0y9pnz
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: fileupload
+  name: fileupload-svc
+  namespace: common
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8481
+    name: http
+    targetPort: 8481
+  selector:
+    app: fileupload

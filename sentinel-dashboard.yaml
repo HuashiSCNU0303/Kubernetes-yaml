@@ -1,0 +1,52 @@
+# 外部访问服务
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentinel
+  namespace: common
+  labels:
+    app: sentinel
+spec:
+  ports:
+    - protocol: TCP
+      name: server
+      port: 8858
+      targetPort: 8858
+    - protocol: TCP
+      name: sentinel-push
+      port: 8719
+      targetPort: 8719
+  type: ClusterIP
+  selector:
+    app: sentinel
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sentinel
+  namespace: common
+spec:
+  serviceName: sentinel
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sentinel
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      containers:
+        - name: sentinel
+          imagePullPolicy: Never
+          image: bladex/sentinel-dashboard:latest
+          ports:
+            - containerPort: 8858
+              name: client
+          env:
+            - name: TZ
+              value: Asia/Shanghai
+            - name: JAVA_OPTS
+              value: "-Dserver.port=8858 -Dserver.servlet.session.timeout=7200"
+  selector:
+    matchLabels:
+      app: sentinel
